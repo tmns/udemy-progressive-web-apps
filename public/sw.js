@@ -1,4 +1,7 @@
-const CACHE_STATIC_NAME = 'static-v0';
+importScripts('/src/js/idb.js');
+importScripts('/src/js/utility.js');
+
+const CACHE_STATIC_NAME = 'staticv';
 const CACHE_DYNAMIC_NAME = 'dynamic';
 
 const STATIC_FILES = [
@@ -7,6 +10,7 @@ const STATIC_FILES = [
     '/offline.html',
     '/src/js/app.js',
     '/src/js/feed.js',
+    '/src/js/idb.js',
     '/src/js/promise.js',
     '/src/js/fetch.js',
     '/src/js/material.min.js',
@@ -57,18 +61,25 @@ self.addEventListener('activate', function(event) {
 
 self.addEventListener('fetch', function(event) {
     // network only strategy for specific route here
-    const url = 'https://httpbin.org/get';
+    const url = 'https://pwagram-6e256.firebaseio.com/posts';
     if (event.request.url.indexOf(url) > -1) {
         event.respondWith(
             // open & store in our dynamic cache
-            caches.open(CACHE_DYNAMIC_NAME).then(function(cache) {
-                return fetch(event.request).then(function(res) {
-                    // trimCache(CACHE_DYNAMIC_NAME, 20);
-                    cache.put(event.request, res.clone());
-                    return res;
+            // caches.open(CACHE_DYNAMIC_NAME).then(function(cache) {
+            fetch(event.request).then(function(res) {
+                // trimCache(CACHE_DYNAMIC_NAME, 20);
+                // cache.put(event.request, res.clone());
+                const clonedRes = res.clone();
+                clearAllData('posts').then(function() {
+                    return clonedRes.json();                    
+                }).then(function(data) {
+                    for (const key in data) {
+                        writeData('posts', data[key]);
+                    }
                 })
+                return res;
             })
-        );
+        )
     } else if (STATIC_FILES.includes(event.request.url)) {
         // cache only strategy here (for our staticly cached files)
         event.respondWith(caches.match(event.request));

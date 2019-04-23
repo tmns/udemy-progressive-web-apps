@@ -13,7 +13,7 @@ let closeCreatePostModalButton = document.querySelector('#close-create-post-moda
 // }
 
 function openCreatePostModal() {
-  createPostArea.style.display = 'block';
+  createPostArea.style.transform = 'translateY(0)';
   if (deferredPrompt) {
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then(function(choiceResult) {
@@ -29,7 +29,7 @@ function openCreatePostModal() {
 }
 
 function closeCreatePostModal() {
-  createPostArea.style.display = 'none';
+  createPostArea.style.transform = 'translateY(100vh)';
 }
 
 shareImageButton.addEventListener('click', openCreatePostModal);
@@ -46,28 +46,26 @@ closeCreatePostModalButton.addEventListener('click', closeCreatePostModal);
 //   }
 // }
 
-function createCard() {
+function createCard(data) {
   let cardWrapper = document.createElement('div');
   cardWrapper.className = 'shared-moment-card mdl-card mdl-shadow--2dp';
-  cardWrapper.style.margin = '0 auto';
 
   let cardTitle = document.createElement('div');
   cardTitle.className = 'mdl-card__title';
-  cardTitle.style.backgroundImage = 'url("/src/images/sf-boat.jpg")';
+  cardTitle.style.backgroundImage = `url("${data.image}")`;
   cardTitle.style.backgroundSize = 'cover';
-  cardTitle.style.height = '180px';
 
   cardWrapper.appendChild(cardTitle);
 
   let cardTitleTextElement = document.createElement('h2');
   cardTitleTextElement.style.color = 'white';
   cardTitleTextElement.className = 'mdl-card__title-text';
-  cardTitleTextElement.textContent = 'San Francisco Trip';
+  cardTitleTextElement.textContent = data.title;
   cardTitle.appendChild(cardTitleTextElement);
 
   let cardSupportingText = document.createElement('div');
   cardSupportingText.className = 'mdl-card__supporting-text';
-  cardSupportingText.textContent = 'In San Francisco';
+  cardSupportingText.textContent = data.location;
   cardSupportingText.style.textAlign = 'center';
 
   // let cardSaveButton = document.createElement('button');
@@ -86,7 +84,24 @@ function clearCards() {
   }
 }
 
-const url = 'https://httpbin.org/get';
+function updateUI(data) {
+  clearCards();
+
+  let dataArray = [];
+  if (!Array.isArray(data)) {
+    for (const key in data) {
+      dataArray.push(data[key]);
+    }
+  } else {
+    dataArray = data.slice(0); // or [...data] or Array.from(data) or...
+  }
+
+  for (let i = 0; i < dataArray.length; i++) {
+    createCard(dataArray[i]);
+  }
+}
+
+const url = 'https://pwagram-6e256.firebaseio.com/posts.json';
 let networkDataRecieved = false;
 
 fetch(url).then(function(res) {
@@ -94,20 +109,28 @@ fetch(url).then(function(res) {
 }).then(function(data) {
   console.log('From web', data);
   networkDataRecieved = true;
-  clearCards();
-  createCard();
+  updateUI(data);
 });
 
-if ('caches' in window) {
-  caches.match(url).then(function(res) {
-    if (res) {
-      return res.json()
-    }
-  }).then(function(data) {
-    console.log('From cache', data);
+if ('indexedDB' in window) {
+  readAllData('posts').then(function(data) {
     if (!networkDataRecieved) {
-      clearCards();
-      createCard();
+      console.log('From indexeddb', data)
+      updateUI(data);
     }
-  });
-}
+  })
+} 
+
+// legacy code for chaching dynamic data (before use of indexeddb)
+// if ('caches' in window) {
+//   caches.match(url).then(function(res) {
+//     if (res) {
+//       return res.json()
+//     }
+//   }).then(function(data) {
+//     console.log('From cache', data);
+//     if (!networkDataRecieved) {
+//       updateUI(data);
+//     }
+//   });
+// }
