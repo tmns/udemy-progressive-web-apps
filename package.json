@@ -17,6 +17,8 @@
   "author": "Maximilian Schwarzmüller",
   "license": "ISC",
   "devDependencies": {
+    "firebase-tools": "^6.7.1",
     "http-server": "^0.10.0"
-  }
+  },
+  "dependencies": {}
 }

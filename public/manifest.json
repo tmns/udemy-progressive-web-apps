@@ -28,9 +28,9 @@
             "sizes": "256x256"
         },
         {
-            "src": "/src/images/icons/app-icon-348x348.png",
+            "src": "/src/images/icons/app-icon-384x384.png",
             "type": "image/png",
-            "sizes": "348x348"
+            "sizes": "384x384"
         },
         {
             "src": "/src/images/icons/app-icon-512x512.png",

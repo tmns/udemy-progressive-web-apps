@@ -1,7 +1,10 @@
-let sharedMomentsArea = document.querySelector('#shared-moments');
-let shareImageButton = document.querySelector('#share-image-button');
-let createPostArea = document.querySelector('#create-post');
-let closeCreatePostModalButton = document.querySelector('#close-create-post-modal-btn');
+const sharedMomentsArea = document.querySelector('#shared-moments');
+const shareImageButton = document.querySelector('#share-image-button');
+const createPostArea = document.querySelector('#create-post');
+const closeCreatePostModalButton = document.querySelector('#close-create-post-modal-btn');
+const form = document.querySelector('form');
+const titleInput = document.querySelector('#title');
+const locationInput = document.querySelector('#location'); 
 
 // example of unregistering service workers
 // if ('serviceWorker' in navigator) {
@@ -14,18 +17,18 @@ let closeCreatePostModalButton = document.querySelector('#close-create-post-moda
 
 function openCreatePostModal() {
   createPostArea.style.transform = 'translateY(0)';
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(function(choiceResult) {
-      console.log(choiceResult.outcome);
-      if (choiceResult.outcome === 'dismissed') {
-        console.log('user cancelled installation');
-      } else {
-        console.log('user added app to home screen');
-      }
-    });
-    deferredPrompt = null;
-  }
+  // if (deferredPrompt) {
+  //   deferredPrompt.prompt();
+  //   deferredPrompt.userChoice.then(function(choiceResult) {
+  //     console.log(choiceResult.outcome);
+  //     if (choiceResult.outcome === 'dismissed') {
+  //       console.log('user cancelled installation');
+  //     } else {
+  //       console.log('user added app to home screen');
+  //     }
+  //   });
+  //   deferredPrompt = null;
+  // }
 }
 
 function closeCreatePostModal() {
@@ -134,3 +137,55 @@ if ('indexedDB' in window) {
 //     }
 //   });
 // }
+
+function sendData() {
+  fetch('https://us-central1-pwagram-6e256.cloudfunctions.net/storePostData', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+      id: new Date().toISOString(),
+      title: titleInput.value,
+      location: locationInput.value,
+      image: 'https://firebasestorage.googleapis.com/v0/b/pwagram-6e256.appspot.com/o/sf-boat.jpg?alt=media&token=b9580ef9-e0f6-4e89-bdf1-735b1be6e91e'
+    })
+  }).then(function(res) {
+    console.log('Sent data', res);
+    updateUI();
+  })
+}
+
+form.addEventListener('submit', function(event) {
+  event.preventDefault();
+
+  if (titleInput.value.trim() === '' || locationInput.value.trim() === '') {
+    alert('Please Enter Valid Data')
+    return;
+  }
+
+  closeCreatePostModal();
+
+  if ('serviceworker' in navigator && 'SyncManager' in window) {
+    navigator.serviceWorker.ready.then(function(sw) {
+      const post = {
+        id: new Date().toISOString(),
+        title: titleInput.value,
+        location: locationInput.value
+      };
+      writeData('sync-posts', post).then(function() {
+       return sw.sync.register('sync-new-posts');
+      }).then(function() {
+        const snackbarContainer = document.querySelector('#confirmation-toast');
+        const data = { message: 'Your post has been saved for syncing!' };
+        snackbarContainer.MaterialSnackbar.showShackbar(data);
+      }).catch(function(err) {
+        console.log(err);
+      })
+    }); 
+  } else {
+    sendData();
+  }
+
+});
