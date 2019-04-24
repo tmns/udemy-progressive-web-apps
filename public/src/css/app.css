@@ -15,6 +15,10 @@
   animation: pulse 1.5s infinite;
 }
 
+.enable-notifications {
+  display: none;
+}
+
 @media (min-width: 600px) {
   .add2hs-button {
     right: 50%;
