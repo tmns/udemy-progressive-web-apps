@@ -10,6 +10,7 @@ const STATIC_FILES = [
     '/offline.html',
     '/src/js/app.js',
     '/src/js/feed.js',
+    '/src/js/utility.js',
     '/src/js/idb.js',
     '/src/js/promise.js',
     '/src/js/fetch.js',
@@ -59,6 +60,17 @@ self.addEventListener('activate', function (event) {
     return self.clients.claim();
 });
 
+function isInArray(string, array) {
+    let cachePath;
+    if (string.indexOf(self.origin) === 0) { // request targets domain where we serve the page from (i.e. NOT a CDN)
+      console.log('matched ', string);
+      cachePath = string.substring(self.origin.length); // take the part of the URL AFTER the domain (e.g. after localhost:8080)
+    } else {
+      cachePath = string; // store the full request (for CDNs)
+    }
+    return array.indexOf(cachePath) > -1;
+  }
+
 self.addEventListener('fetch', function (event) {
     // network only strategy for specific route here
     const url = 'https://pwagram-6e256.firebaseio.com/posts';
@@ -80,7 +92,7 @@ self.addEventListener('fetch', function (event) {
                 return res;
             })
         )
-    } else if (STATIC_FILES.includes(event.request.url)) {
+    } else if (isInArray(event.request.url, STATIC_FILES)) {
         // cache only strategy here (for our staticly cached files)
         event.respondWith(caches.match(event.request));
     } else {
@@ -92,20 +104,20 @@ self.addEventListener('fetch', function (event) {
                 } else {
                     return fetch(event.request).then(function (res) {
                         // open & store in our dynamic cache
-                        caches.open(CACHE_DYNAMIC_NAME).then(function (cache) {
+                        return caches.open(CACHE_DYNAMIC_NAME).then(function (cache) {
                             // trimCache(CACHE_DYNAMIC_NAME, 20);
                             cache.put(event.request.url, res.clone());
                             return res;
                         })
                     })
-                        .catch(function (err) {
-                            // if we're offline and the user requests text/html resource, serve /offline.html
-                            return caches.open(CACHE_STATIC_NAME).then(function (cache) {
-                                if (event.request.headers.get('accept').includes('text/html')) {
-                                    return cache.match('/offline.html');
-                                }
-                            })
+                    .catch(function (err) {
+                        // if we're offline and the user requests text/html resource, serve /offline.html
+                        return caches.open(CACHE_STATIC_NAME).then(function (cache) {
+                            if (event.request.headers.get('accept').includes('text/html')) {
+                                return cache.match('/offline.html');
+                            }
                         })
+                    })
                 }
             })
         )
@@ -119,18 +131,18 @@ self.addEventListener('sync', function (event) {
         event.waitUntil(
             readAllData('sync-posts').then(function (data) {
                 for (const dt of data) {
+
+                    const postData = new FormData();
+                    postData.append('id', dt.id);
+                    postData.append('title', dt.title);
+                    postData.append('location', dt.location);
+                    postData.append('file', dt.picture, dt.id + '.png')
+                    poostData.append('rawLocationLat', dt.rawLocation.lat);
+                    poostData.append('rawLocationLng', dt.rawLocation.lng);
+
                     fetch('https://us-central1-pwagram-6e256.cloudfunctions.net/storePostData', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            id: dt.id,
-                            title: dt.value,
-                            location: dt.location,
-                            image: 'https://firebasestorage.googleapis.com/v0/b/pwagram-6e256.appspot.com/o/sf-boat.jpg?alt=media&token=b9580ef9-e0f6-4e89-bdf1-735b1be6e91e'
-                        })
+                        body: postData
                     }).then(function (res) {
                         console.log('Sent data', res);
                         if (res.ok) {

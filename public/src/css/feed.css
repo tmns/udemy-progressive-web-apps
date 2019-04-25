@@ -40,6 +40,29 @@
   height: 180px;
 }
 
+#create-post video, #create-post canvas {
+  width: 512px;
+  max-width: 100%;
+  display: none;
+  margin: auto;
+}
+
+#create-post #pick-image, #create-post #location-loader {
+  display: none;
+}
+
+#create-post #pick-image {
+  display: none;
+}
+
+#create-post #capture-btn {
+  margin: 10px auto;
+}
+
+.mdl-spinner {
+  margin: auto;
+}
+
 @media (min-width: 600px) {
   .shared-moment-card.mdl-card {
     width: 60%;
