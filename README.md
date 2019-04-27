@@ -13,3 +13,35 @@
 * Turn your next SPA project into a PWA
 
 #### It's a great course and I highly recommend it!
+
+#### Below are some screenshots of the application you build throughout the course
+
+
+
+##### Being prompted to add the app to your home screen, triggered by a button click.
+
+![](./screens/add-to-hs.png)
+
+
+
+##### Subscribing to notifications
+
+![](./screens/subscribing-to-not.png)
+
+
+
+##### Receiving a notification for a new post
+
+![](./screens/new-post-not.png)
+
+
+
+##### Retrieving items from IndexedDB when there is no internet connection, ensuring the application still works perfectly even when on the subway!
+
+![](./screens/offline-ret-from-indexeddb.png)
+
+
+
+##### The Lighthouse score turned out pretty good. This screen also shows the app making use of the device's built in camera.
+
+![](./screens/lighthouse.png)
